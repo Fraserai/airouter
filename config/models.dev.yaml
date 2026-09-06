@@ -1,0 +1,29 @@
+# Development registry overlay. Loaded ONLY when ROUTER_ENV != production.
+#
+# The stub's cost genuinely is zero and its behaviour is deterministic, so
+# `verified: true` here is a statement of fact, not a shortcut. It exists so the
+# end-to-end path is provable before any credential exists.
+
+schema_version: 1
+source:
+  name: "development stub"
+  version: "1"
+
+models:
+  - id: dev-stub@stub
+    display_name: "Development stub (deterministic echo)"
+    lab: none
+    access: open
+    placement: cloud_open
+    lifecycle: executor
+    verified: true
+    verified_at: 2026-09-07T00:00:00Z
+    provider: stub
+    provider_model_id: stub
+    context_window: 128000
+    modalities: [text]
+    scores: {composite: 0}
+    pricing:
+      input_usd_per_mtok: 0.0
+      output_usd_per_mtok: 0.0
+    notes: "Dev only. Refused when ROUTER_ENV=production."

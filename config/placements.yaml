@@ -1,0 +1,43 @@
+# Placement definitions and the local amortised cost model.
+#
+# `local` cost is NOT per-token. Two numbers are derived (PLAN.md §5.4):
+#   marginal_cost_per_token  -> used for ROUTING  (energy + congestion)
+#   allocated_cost_per_token -> used for REPORTING (amortised capex/throughput)
+# Conflating them breaks the product: route on allocated and an idle GPU looks
+# expensive so you never use it; report on marginal and you book savings you
+# did not make.
+
+placements:
+  local:
+    data_leaves_perimeter: false
+    capacity_bound: true
+    cost_model: amortised
+    # All values below are PLACEHOLDERS for the dev box. Replace with the real
+    # fleet numbers before any savings figure is shown to a customer.
+    hardware:
+      capex_usd: 0.0
+      amortisation_months: 36
+      power_kw: 0.0
+      power_usd_per_kwh: 0.0
+      ops_usd_per_month: 0.0
+    throughput:
+      measured_tokens_per_hour: null   # measured at runtime, not assumed
+    congestion:
+      slo_ms: 5000
+      # As queue depth approaches the SLO, marginal cost converges on the price
+      # of the model we would spill to.
+      spill_to: cloud_open
+    verified: false
+
+  cloud_open:
+    data_leaves_perimeter: true
+    capacity_bound: false
+    cost_model: per_token
+    verified: false
+
+  closed_frontier:
+    data_leaves_perimeter: true
+    capacity_bound: false
+    cost_model: per_token
+    rate_limited: true
+    verified: false

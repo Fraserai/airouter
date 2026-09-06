@@ -1,0 +1,17 @@
+tenant_id: default
+display_name: "Default tenant"
+
+constraints:
+  # Filters, never preferences. If a tenant forbids data leaving the perimeter
+  # the candidate set is `local` only, full stop. (BRIEF.md §5.2)
+  placement_allow: [local, cloud_open, closed_frontier]
+  data_residency: null
+  pii_handling: standard
+
+budgets:
+  monthly_usd: null        # null = unlimited; set per tenant
+  alert_at_pct: 80.0
+
+defaults:
+  quality_floor_profile: standard
+  latency_slo_ms: 30000
