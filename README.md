@@ -32,10 +32,13 @@ Drop-in check with the real SDK:
 
 ```python
 from openai import OpenAI
+
 client = OpenAI(base_url="http://127.0.0.1:8099/v1", api_key="unused")
-print(client.chat.completions.create(
-    model="auto", messages=[{"role": "user", "content": "hi"}]
-).choices[0].message.content)
+print(
+    client.chat.completions.create(model="auto", messages=[{"role": "user", "content": "hi"}])
+    .choices[0]
+    .message.content
+)
 ```
 
 ## Checks

@@ -90,6 +90,10 @@ def create_app() -> FastAPI:
                     "object": "model",
                     "owned_by": entry.lab,
                     "display_name": entry.display_name,
+                    # The routable unit is (family, effort), not model.
+                    "family": entry.family,
+                    "effort": entry.effort,
+                    "effort_rank": entry.effort_rank,
                     "placement": entry.placement.value,
                     "access": entry.access.value,
                     "lifecycle": entry.lifecycle.value,
@@ -97,6 +101,10 @@ def create_app() -> FastAPI:
                     "selectable": not reasons,
                     "blocked_by": reasons,
                     "composite_score": entry.scores.composite,
+                    # Benchmark economics. Display only -- never a price and
+                    # never read by selection. See tests/test_selection_guards.py
+                    "benchmark_cost_per_task_usd": entry.benchmark.cost_per_task_usd,
+                    "cost_status": entry.benchmark.cost_status.value,
                     "has_subscores": entry.scores.has_subscores,
                     "context_window": entry.context_window,
                 }

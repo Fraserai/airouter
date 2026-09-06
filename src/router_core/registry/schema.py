@@ -113,6 +113,38 @@ class Pricing(BaseModel):
     currency: str = "USD"
 
 
+class CostStatus(StrEnum):
+    KNOWN = "known"
+    UNKNOWN = "unknown"
+
+
+class Benchmark(BaseModel):
+    """Published benchmark economics. NOT a price and NOT a routing input.
+
+    `cost_per_task_usd` is a weighted average over the index provider's own task
+    mix. It is only a valid predictor of YOUR cost if your traffic looks like
+    their benchmark, which it will not. Routing prices requests from
+    `TokenCost` x the request's own token profile. This block exists to seed
+    priors, to sanity-check the harness, and for display.
+
+    `index_per_usd` is a browsing aid. A model with a great ratio that sits below
+    the task's capability floor is useless at any price.
+
+    tests/test_selection_guards.py asserts nothing in the selection path reads it.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    cost_per_task_usd: float | None = None
+    cost_status: CostStatus = CostStatus.UNKNOWN
+    source: str | None = None
+    measured_at: date | None = None
+
+    @property
+    def index_per_usd(self) -> float | None:
+        return None
+
+
 class CostBasis(StrEnum):
     PER_TOKEN = "per_token"
     AMORTISED = "amortised"
@@ -167,6 +199,18 @@ class ModelEntry(BaseModel):
     id: str
     display_name: str
     lab: str = "unknown"
+
+    # (model, effort) is the ROUTABLE UNIT, not model (BRIEF §3, cost data).
+    # `family` groups the effort variants of one underlying model so the
+    # escalator can walk the dial before switching families.
+    family: str = ""
+    # `effort` is the PROVIDER'S OWN LABEL -- "max", "high", "xhigh", "default".
+    # Routing logic must never compare these strings: the vocabulary is vendor
+    # semantics and the ordering is not universal (is "xhigh" above or below
+    # "max"? it depends whose model it is). Ordering comes from `effort_rank`,
+    # supplied by config. See FINDINGS.md F007.
+    effort: str = "default"
+    effort_rank: int = 0
     access: Access = Access.UNKNOWN
     placement: Placement = Placement.UNKNOWN
     lifecycle: Lifecycle = Lifecycle.CANDIDATE
@@ -175,6 +219,7 @@ class ModelEntry(BaseModel):
     verified_at: datetime | None = None
 
     scores: Scores = Field(default_factory=Scores)
+    benchmark: Benchmark = Field(default_factory=Benchmark)
     context_window: int | None = None
     modalities: list[str] = Field(default_factory=list)
     pricing: Pricing | None = None
@@ -210,7 +255,15 @@ class ModelEntry(BaseModel):
             reasons.append("no_cost_model")
         if self.health.state == HealthState.DOWN:
             reasons.append("health_down")
+        if self.benchmark.cost_status == CostStatus.UNKNOWN:
+            # A router that cannot price a model cannot choose it responsibly.
+            reasons.append("cost_unknown")
         return reasons
+
+    @property
+    def routable_unit(self) -> tuple[str, str]:
+        """The unit the router actually selects: (family, effort)."""
+        return (self.family or self.id, self.effort)
 
     @property
     def is_selectable(self) -> bool:

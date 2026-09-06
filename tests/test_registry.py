@@ -26,7 +26,7 @@ def test_every_seed_model_is_unverified_and_unpriced(config_dir):
 
 def test_subscore_schema_exists_even_though_seed_supplies_only_composite(config_dir):
     registry = load_registry(config_dir / "models.seed.yaml")
-    entry = registry.get("fable-5-1@frontier")
+    entry = registry.get("fable-5-1@frontier:max")
     assert entry.scores.composite == 57
     assert entry.scores.has_subscores is False
     assert entry.scores.terminal_bench_v2_1 is None  # present in schema, unset
@@ -37,13 +37,13 @@ def test_registry_version_is_content_addressed(config_dir):
     b = load_registry(config_dir / "models.seed.yaml")
     assert a.version == b.version
 
-    changed = a.with_entry(a.get("kimi-k3@cloud").model_copy(update={"verified": True}))
+    changed = a.with_entry(a.get("kimi-k3@cloud:max").model_copy(update={"verified": True}))
     assert changed.version != a.version, "registry version must change when the pool does"
 
 
 def test_selectable_reasons_are_explanatory_not_boolean(config_dir):
     registry = load_registry(config_dir / "models.seed.yaml")
-    reasons = registry.get("inkling@unknown").selectable_reasons()
+    reasons = registry.get("inkling@unknown:default").selectable_reasons()
     assert "unverified" in reasons
     assert "placement_unknown" in reasons
 

@@ -10,8 +10,11 @@ source:
   version: "1"
 
 models:
-  - id: dev-stub@stub
+  - id: dev-stub@stub:default
     display_name: "Development stub (deterministic echo)"
+    family: dev-stub
+    effort: default
+    effort_rank: 0
     lab: none
     access: open
     placement: cloud_open
@@ -23,6 +26,9 @@ models:
     context_window: 128000
     modalities: [text]
     scores: {composite: 0}
+    benchmark:
+      cost_per_task_usd: 0.0
+      cost_status: known
     pricing:
       input_usd_per_mtok: 0.0
       output_usd_per_mtok: 0.0

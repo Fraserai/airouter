@@ -35,11 +35,11 @@ def test_planted_vendor_name_in_routing_logic_is_caught():
 
 
 def test_planted_model_id_in_routing_logic_is_caught():
-    GUARDED.write_text('PREFERRED = "fable-5-1@frontier"\n')
+    GUARDED.write_text('PREFERRED = "fable-5-1@frontier:max"\n')
     try:
         result = _run()
         assert result.returncode == 1
-        assert "fable-5-1@frontier" in result.stdout
+        assert "fable-5-1@frontier:max" in result.stdout
     finally:
         GUARDED.unlink(missing_ok=True)
 

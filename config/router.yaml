@@ -5,21 +5,21 @@
 # policy recompile, never a code change. See scripts/swap_intelligence_model.py.
 
 router:
-  intelligence_model: fable-5-1@frontier
+  intelligence_model: fable-5-1@frontier:max
 
   # Fallback chain for the router intelligence, used when the primary is
   # unavailable. Tier 2 degrades to Tier 1 rather than failing closed; this
   # chain is tried first. (PLAN.md Q6)
   intelligence_fallbacks:
-    - gpt-6-astra@frontier
-    - opus-5@frontier
+    - gpt-6-astra@frontier:max
+    - opus-5@frontier:max
 
   policy_version: null   # set by the compiler on promotion; null = uncompiled
 
 # M0 ONLY. No routing exists yet, so serve this model for every request.
 # This whole block is deleted at M2 when the router takes over.
 m0:
-  fixed_model: dev-stub@stub
+  fixed_model: dev-stub@stub:default
 
 tiers:
   tier1:
@@ -97,6 +97,19 @@ escalation:
   max_escalations_per_request: 2
   # A request that escalates twice is a Tier 1 misprediction. Logged as such.
   double_escalation_is_misprediction: true
+
+  # BRIEF §3 says escalation should walk effort settings before model tiers.
+  # That is right on COST but wrong as a fixed order, because it depends on how
+  # the request failed. More effort fixes under-thinking; it does not conjure a
+  # capability the model does not have. Escalating on effort after a capability
+  # failure burns a second full execution to fail the same way.
+  # So: the ladder is chosen by FAILURE CLASS. See FINDINGS.md F008.
+  ladder_by_failure_class:
+    under_thinking:      [effort_up, family_up]   # truncated reasoning, self-consistency miss
+    capability_missing:  [family_up]              # schema violation, malformed tool call
+    context_overflow:    [family_up]              # needs a bigger window, not more thinking
+    provider_error:      [retry_same, family_up]
+    unknown:             [effort_up, family_up]   # default to the cheaper move
 
 governor:
   target_open_spend_pct: 80.0

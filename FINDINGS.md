@@ -132,3 +132,101 @@ This is the brief's requirement (§3 rule 2) working as intended, not a bug: a
 router that silently misclassifies a closed model as open is a compliance
 incident. M0/M1 therefore run against a deterministic stub provider so the path is
 provable end to end without inventing a single price.
+
+---
+
+## F007 — Effort labels are vendor vocabulary; ordering must come from config
+
+BRIEF §3 makes `(model, effort)` the routable unit. Correct, and implemented.
+But the effort labels in the table are each vendor's own naming — `max`, `high`,
+`xhigh`, and an unlabelled default. There is no universal ordering across them:
+
+> Is `xhigh` more or less effort than `max`? It depends whose model it is. The
+> answer is not in the string.
+
+Any code that sorts effort by comparing those strings has vendor semantics baked
+into routing logic, which §13 forbids and which would break silently the first
+time a provider introduces a new dial name.
+
+Decision: entries carry `effort` (the provider's label, for display and for the
+provider adapter) and `effort_rank` (an integer supplied by config). **Routing
+compares ranks and never labels.** Ranks are only meaningful within a family;
+comparing a rank across families is meaningless and no code may do it.
+`registry.family()` and `registry.next_effort_up()` are the only ordered
+accessors, and `tests/test_effort_units.py` uses labels whose alphabetical order
+disagrees with their effort order so the test would catch a string sort.
+
+---
+
+## F008 — Escalation should be chosen by failure class, not a fixed effort-first ladder
+
+BRIEF §3 says "escalation should walk effort settings before it walks model
+tiers." That is right on cost and wrong as a fixed rule, and this is the one
+place in the cost addendum I am not implementing literally.
+
+More effort fixes **under-thinking**. It does not conjure a capability the model
+does not have. If a model produced a malformed tool call because it has weak
+structured-output support, or overflowed its context window, re-running it at
+`max` effort burns a second full execution to fail in exactly the same way — and
+because effort escalation raises reasoning tokens, which §3 identifies as the
+largest cost component, the failed retry is expensive.
+
+Decision: the ladder is selected by failure class, configured in
+`router.yaml:escalation.ladder_by_failure_class`.
+
+| Failure class | Ladder | Why |
+|---|---|---|
+| `under_thinking` | effort → family | the brief's case; cheapest move first |
+| `capability_missing` | family | more thinking will not add a capability |
+| `context_overflow` | family | needs a bigger window, not more reasoning |
+| `provider_error` | retry → family | not a quality failure at all |
+| `unknown` | effort → family | defaults to the brief's behaviour |
+
+Where the failure class is unknown the behaviour is exactly what the brief asks
+for, so this narrows the rule rather than replacing it. Verified at M3, where the
+gates that produce the failure class get built.
+
+---
+
+## F009 — The 61x ratio is the ceiling of the opportunity, not the expected result
+
+BRIEF §3: "Fable 5.1 costs roughly 61x what Luna costs for about 33% more index.
+The whole business case is in that ratio." Reproduced as a sanity baseline in
+`tests/test_economics_baseline.py`, and it holds against the seed data.
+
+Two cautions to carry into any customer-facing use of that number:
+
+1. **It is the widest spread in the pool, not the realistic comparison.** The
+   router's actual saving is measured against what it would otherwise have
+   routed to, not against the single cheapest model that happens to clear 43. The
+   honest headline stays the shadow-calibrated savings figure with its confidence
+   interval (BRIEF §6). The 61x is the size of the prize, not the forecast.
+2. **Both ends of that ratio are closed models.** The headline spread is not an
+   open-versus-closed story at all, which is the cleanest possible illustration of
+   the brief's own point that cheap does not mean open. Worth saying out loud in
+   any deck, because the natural misreading is that the 61x *is* the 80/20 thesis.
+   It is not; it is the case for capability-aware routing regardless of licence.
+
+---
+
+## F010 — Benchmark cost-per-task is not a price, and the selection path must never see it
+
+The new cost column is a weighted average over the index provider's own task mix,
+segmented across answer, reasoning, cache-write, cache-hit and input tokens. It
+predicts *your* cost only if your traffic resembles their benchmark, and it will
+not: a model that looks cheap on a reasoning-heavy short-answer mix can be
+expensive on long-context summarisation, and vice versa.
+
+The trap is that it is a single, tempting, already-populated number sitting right
+next to the model, at a moment when real per-token pricing is `null` everywhere.
+
+Decision: it lives in a `benchmark` block, deliberately separated from `pricing`,
+documented as not-a-price at the type. Requests are priced from `TokenCost`
+multiplied by the request's own token profile. `tests/test_selection_guards.py`
+scans the selection path and fails on any reference to `cost_per_task_usd`,
+`index_per_usd`, or `is_open` — the last because the same test file is the right
+home for the brief's rule that open/closed is governance, not cost.
+
+Those guards currently scan an empty `router/` directory. That is intentional:
+they are written before the code they constrain, so the constraint is in place on
+the day M2 selection is written rather than retrofitted after the mistake.

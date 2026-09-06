@@ -76,30 +76,46 @@ Transcribed from the Artificial Analysis Intelligence Index v4.2 snapshot dated 
 
 Index incorporates 10 evaluations: AA-Briefcase, GDPval-AA v2, τ³-Banking, Terminal-Bench v2.1, SciCode, Humanity's Last Exam, GDP.pdf, CritPt, AA-Omniscience, AA-LCR v1.1.
 
-| # | Model | Index | Lab | Access (seed, unverified) |
-|---|---|---|---|---|
-| 1 | Claude Fable 5.1 (max, with fallback) | 57 | Anthropic | Closed |
-| 2 | GPT-6 Astra (max) | 55 | OpenAI | Closed |
-| 3 | Claude Opus 5 (max) | 54 | Anthropic | Closed |
-| 4 | Claude Fable 5 (with fallback) | 53 | Anthropic | Closed |
-| 5 | Muse Spark 1.3 (max) | 53 | Meta | Open |
-| 6 | GPT-5.6 Sol (max) | 51 | OpenAI | Closed |
-| 7 | Grok 4.6 (high) | 51 | xAI | Closed |
-| 8 | Kimi K3 (max) | 50 | Moonshot | Open |
-| 9 | GLM-5.3 (max) | 49 | Z.ai | Open |
-| 10 | Gemini 3.8 Flash (high) | 47 | Google | Closed |
-| 11 | GPT-5.6 Terra (max) | 47 | OpenAI | Closed |
-| 12 | Qwen3.8 2.4T A95B | 47 | Alibaba | Open |
-| 13 | GLM-5.3-Flash | 46 | Z.ai | Open |
-| 14 | GPT-5.6 Luna (max) | 43 | OpenAI | Closed |
-| 15 | DeepSeek V4 Pro 0813 (max) | 42 | DeepSeek | Open |
-| 16 | Qwen3.8 27B (xhigh) | 41 | Alibaba | Open |
-| 17 | K2 Horizon 375B A23B | 38 | — | Open |
-| 18 | MiniMax-M3 | 36 | MiniMax | Open |
-| 19 | Inkling | 32 | Thinking Machines | Unknown |
-| 20 | Gemini 3.5 Flash-Lite | 28 | Google | Closed |
-| 21 | Muse Glimmer (high) | 24 | Meta | Open |
-| 22 | gpt-oss-120b (high) | 16 | OpenAI | Open |
+Cost data from the companion chart, Cost per Intelligence Index Task, same date: weighted average USD per index task, segmented by token type (answer, reasoning, cache write, cache hit, input). Lower is better.
+
+| # | Model | Index | Cost/task | Index per $ | Lab | Access (unverified) |
+|---|---|---|---|---|---|---|
+| 1 | Claude Fable 5.1 (max, with fallback) | 57 | $6.12 | 9 | Anthropic | Closed |
+| 2 | GPT-6 Astra (max) | 55 | $2.57 | 21 | OpenAI | Closed |
+| 3 | Claude Opus 5 (max) | 54 | $4.21 | 13 | Anthropic | Closed |
+| 4 | Claude Fable 5 (with fallback) | 53 | $5.62 | 9 | Anthropic | Closed |
+| 5 | Muse Spark 1.3 (max) | 53 | $0.96 | 55 | Meta | Open |
+| 6 | GPT-5.6 Sol (max) | 51 | $1.25 | 41 | OpenAI | Closed |
+| 7 | Grok 4.6 (high) | 51 | $1.25 | 41 | xAI | Closed |
+| 8 | Kimi K3 (max) | 50 | $1.58 | 32 | Moonshot | Open |
+| 9 | GLM-5.3 (max) | 49 | $1.26 | 39 | Z.ai | Open |
+| 10 | Gemini 3.8 Flash (high) | 47 | $0.74 | 64 | Google | Closed |
+| 11 | GPT-5.6 Terra (max) | 47 | $0.81 | 58 | OpenAI | Closed |
+| 12 | Qwen3.8 2.4T A95B | 47 | $1.10 | 43 | Alibaba | Open |
+| 13 | GLM-5.3-Flash | 46 | $0.18 | 256 | Z.ai | Open |
+| 14 | GPT-5.6 Luna (max) | 43 | $0.10 | 430 | OpenAI | Closed |
+| 15 | DeepSeek V4 Pro 0813 (max) | 42 | $0.33 | 127 | DeepSeek | Open |
+| 16 | Qwen3.8 27B (xhigh) | 41 | $0.57 | 72 | Alibaba | Open |
+| 17 | K2 Horizon 375B A23B | 38 | no data | — | — | Open |
+| 18 | MiniMax-M3 | 36 | $0.23 | 157 | MiniMax | Open |
+| 19 | Inkling | 32 | $0.44 | 73 | Thinking Machines | Unknown |
+| 20 | Gemini 3.5 Flash-Lite | 28 | $0.08 | 350 | Google | Closed |
+| 21 | Muse Glimmer (high) | 24 | $0.04 | 600 | Meta | Open |
+| 22 | gpt-oss-120b (high) | 16 | $0.12 | 133 | OpenAI | Open |
+
+### What the cost data changes
+
+**Cheap does not mean open.** GPT-5.6 Luna is closed, costs $0.10/task, and scores 43 — cheaper than most open models in this pool and stronger than several. Gemini 3.5 Flash-Lite is closed at $0.08. The open/closed axis is a governance and residency concern; it is not a proxy for cost, and routing logic must never treat it as one. The 80/20 target is a business commitment tracked by the governor, not an input to per-request selection.
+
+**"Index per $" is a browsing aid, not a routing rule.** It is included to make the spread legible, nothing more. A model with a great ratio that sits below the task's capability floor is useless at any price. The selection rule in §5 stands unchanged: filter to models clearing the floor, then take the cheapest survivor.
+
+**Effort settings are a routing lever.** The suffixes — (max), (high), (xhigh) — are effort dials on the same underlying model, and both charts price and score each setting separately. The registry must model `(model, effort)` as the routable unit, not `model`. This gives the router a cheaper move than switching models: turn the dial down first, switch families second. Escalation should walk effort settings before it walks model tiers.
+
+**Reasoning tokens dominate frontier cost.** On the expensive bars the reasoning segment is the largest component. Any capability that reduces reasoning tokens — tighter prompts, cached rubrics, effort dials — attacks the biggest line item. This is also why §2's bounded digest matters so much: a Tier 2 consult that triggers full reasoning is the single easiest way to destroy the economics.
+
+**The headline number:** Fable 5.1 costs roughly 61x what Luna costs for about 33% more index. The whole business case is in that ratio. Reproduce it in the eval harness as a sanity baseline.
+
+**Data gap:** K2 Horizon 375B A23B appears on the intelligence chart but not the cost chart. It has no price and must be marked `cost_unknown` and excluded from routing until priced. Any registry entry lacking a verified cost is ineligible — a router that cannot price a model cannot choose it responsibly.
 
 ### Rules for handling this table
 

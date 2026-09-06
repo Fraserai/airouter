@@ -17,17 +17,17 @@ def test_models_endpoint_explains_why_entries_are_blocked(client):
     body = client.get("/v1/models").json()
     assert body["registry_version"].startswith("reg_")
     by_id = {m["id"]: m for m in body["data"]}
-    frontier = by_id["fable-5-1@frontier"]
+    frontier = by_id["fable-5-1@frontier:max"]
     assert frontier["selectable"] is False
     assert "unverified" in frontier["blocked_by"]
     assert frontier["has_subscores"] is False
-    assert by_id["dev-stub@stub"]["selectable"] is True
+    assert by_id["dev-stub@stub:default"]["selectable"] is True
 
 
 def test_only_the_stub_is_selectable_on_a_fresh_checkout(client):
     body = client.get("/v1/models").json()
     selectable = [m["id"] for m in body["data"] if m["selectable"]]
-    assert selectable == ["dev-stub@stub"]
+    assert selectable == ["dev-stub@stub:default"]
 
 
 def test_chat_completion_round_trip(client):
@@ -57,7 +57,7 @@ def test_serving_an_unverified_model_is_refused(client):
         json={
             "model": "auto",
             "messages": [{"role": "user", "content": "hi"}],
-            "router": {"pin_model": "fable-5-1@frontier"},
+            "router": {"pin_model": "fable-5-1@frontier:max"},
         },
     )
     assert resp.status_code == 409

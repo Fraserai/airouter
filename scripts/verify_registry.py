@@ -18,7 +18,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
 from router_core.config import load_config  # noqa: E402
-from router_core.registry.schema import Access, Placement  # noqa: E402
+from router_core.registry.schema import Access, CostStatus, Placement  # noqa: E402
 
 REQUIRED_WHEN_VERIFIED = ("context_window", "modalities", "provider", "provider_model_id")
 
@@ -37,6 +37,10 @@ def audit(entry) -> list[str]:
         problems.append("pricing missing")
     if entry.cost is None:
         problems.append("no derivable cost model")
+    if entry.benchmark.cost_status == CostStatus.UNKNOWN:
+        problems.append("cost_unknown (no published cost; cannot be priced)")
+    if not entry.family:
+        problems.append("family missing (needed for the effort escalation ladder)")
     if entry.verified:
         for field in REQUIRED_WHEN_VERIFIED:
             value = getattr(entry, field, None)

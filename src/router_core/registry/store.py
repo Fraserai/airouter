@@ -72,6 +72,33 @@ class Registry:
     def by_lifecycle(self, lifecycle: Lifecycle) -> list[ModelEntry]:
         return [e for e in self._entries.values() if e.lifecycle == lifecycle]
 
+    def family(self, family: str, placement: Placement | None = None) -> list[ModelEntry]:
+        """Every effort variant of one model, ordered cheapest-effort first.
+
+        Ordered by `effort_rank`, never by the effort label -- the labels are
+        vendor vocabulary ("max", "xhigh", "high") with no universal ordering.
+        See FINDINGS.md F007.
+        """
+        entries = [e for e in self._entries.values() if e.family == family]
+        if placement is not None:
+            entries = [e for e in entries if e.placement == placement]
+        return sorted(entries, key=lambda e: e.effort_rank)
+
+    def effort_siblings(self, entry: ModelEntry) -> list[ModelEntry]:
+        return self.family(entry.family, entry.placement)
+
+    def next_effort_up(self, entry: ModelEntry) -> ModelEntry | None:
+        """The cheapest escalation move: same model, one notch more effort.
+
+        The escalator tries this before switching families, because turning the
+        dial is cheaper than changing model -- but only when the failure looks
+        like under-thinking. See FINDINGS.md F008.
+        """
+        for sibling in self.effort_siblings(entry):
+            if sibling.effort_rank > entry.effort_rank:
+                return sibling
+        return None
+
     def routers(self) -> list[ModelEntry]:
         return self.by_lifecycle(Lifecycle.ROUTER)
 
