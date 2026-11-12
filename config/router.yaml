@@ -1,133 +1,36 @@
-# Router configuration.
-#
-# `intelligence_model` is the ONE line that changes when a better frontier model
-# becomes the best in the world (BRIEF.md §3 rule 4). Changing it requires a
-# policy recompile, never a code change. See scripts/swap_intelligence_model.py.
-
+# Model Router: one frontier routing brain, one shared model pool, one API.
+# auto selects the highest-ranked catalog model; benchmark cost breaks ties.
+# Its deployment must be configured and verified before live routing works.
 router:
-  intelligence_model: fable-5-1@frontier:max
-
-  # Fallback chain for the router intelligence, used when the primary is
-  # unavailable. Tier 2 degrades to Tier 1 rather than failing closed; this
-  # chain is tried first. (PLAN.md Q6)
-  intelligence_fallbacks:
-    - gpt-6-astra@frontier:max
-    - opus-5@frontier:max
-
-  policy_version: null   # set by the compiler on promotion; null = uncompiled
-
-# M0 ONLY. No routing exists yet, so serve this model for every request.
-# This whole block is deleted at M2 when the router takes over.
-m0:
+  intelligence_model: auto
+auth:
+  enabled: false
+  api_key_env: ROUTER_GATEWAY_API_KEY
+runtime_routing:
+  enabled: true
+  leader_max_output_tokens: 2048
+  max_digest_tokens: 2000
+  digest_head_chars: 3200
+  digest_tail_chars: 3200
+  default_max_tokens: 1024
+  placement_preference: []
+  max_consult_cost_usd: 0.5
+development:
   fixed_model: dev-stub@stub:default
-
-tiers:
-  tier1:
-    # Below this confidence, consider escalating the DECISION to Tier 2.
-    confidence_threshold: 0.75
-  tier2:
-    enabled: false        # turns on at M4
-    # Budgeted in SPEND. When the window budget is exhausted, Tier 1 handles
-    # everything and degrades conservatively (BRIEF §2).
-    spend_budget_pct_of_counterfactual: 2.0
-    budget_window: "24h"
-    on_budget_exhausted: tier1_conservative
-    # Tier 2 is budgeted in SPEND, not request count. See PLAN.md §2 and
-    # disagreement 1. Request-rate is reported as a diagnostic only.
-    max_digest_tokens: 2000
-    high_stakes_always_consult: true
-
-# Routing overhead budget.
-#
-# DENOMINATOR IS COUNTERFACTUAL SPEND, not total actual spend (BRIEF §10.4).
-# Actual spend shrinks as the router succeeds, so using it would make the metric
-# punish success. Absolute cost per request is reported alongside because it is
-# denominator-free.
-#
-# Shadow calibration is deliberately NOT in this budget -- it is measurement
-# cost, not routing cost. See FINDINGS.md F002.
-overhead_budget:
-  denominator: counterfactual_spend
-  total_pct: 3.0
-  components:
-    tier2_consults_pct: 2.0
-    verification_pct: 0.7
-    policy_compilation_pct: 0.3
-  also_report:
-    - absolute_routing_cost_per_request_usd
-
-# Counterfactual calibration by sampled shadow execution (BRIEF §6).
-# Real money. Its own line item in the ledger. Raising the rate narrows the
-# confidence interval and lowers the reported savings -- a commercial call.
-shadow_calibration:
-  enabled: true
-  sample_rate: 0.01
-  stratify_by: [task_class, context_length_bucket]
-  min_samples_per_class: 30
-  report_confidence_interval: 0.95
-
-# Judging. The judge may not share a lab with the policy compiler OR with the
-# model under test -- blinding does not defeat self-preference within a family.
-# See FINDINGS.md F003.
-judge:
-  exclude_lab_of_policy_author: true
-  exclude_lab_of_model_under_test: true
-  blind_model_identity: true
-  randomise_position: true
-  gold_set_path: "evals/workloads/gold_set.jsonl"
-  min_agreement_with_gold: 0.70
-  agreement_gates_policy_promotion: true
-  # When no eligible third-party judge exists for a comparison, it is NOT
-  # scored by a model. It queues for human labelling.
-  on_no_eligible_judge: queue_for_human
-
-selection:
-  # Cheapest that clears the floor WITH MARGIN. Margin scales with classifier
-  # uncertainty so borderline requests don't all turn into escalations.
-  # (PLAN.md disagreement 5)
-  capability_margin_base: 0.0
-  capability_margin_per_unit_uncertainty: 6.0
-  tie_break_order: [latency, placement]
-  placement_preference: [local, cloud_open, closed_frontier]
-  # Cost of abandoning a warm prompt cache when switching models mid-session.
-  # (PLAN.md Q3.1)
-  switch_cost_enabled: true
-
-escalation:
-  max_escalations_per_request: 2
-  # A request that escalates twice is a Tier 1 misprediction. Logged as such.
-  double_escalation_is_misprediction: true
-
-  # BRIEF §3 says escalation should walk effort settings before model tiers.
-  # That is right on COST but wrong as a fixed order, because it depends on how
-  # the request failed. More effort fixes under-thinking; it does not conjure a
-  # capability the model does not have. Escalating on effort after a capability
-  # failure burns a second full execution to fail the same way.
-  # So: the ladder is chosen by FAILURE CLASS. See FINDINGS.md F008.
-  ladder_by_failure_class:
-    under_thinking:      [effort_up, family_up]   # truncated reasoning, self-consistency miss
-    capability_missing:  [family_up]              # schema violation, malformed tool call
-    context_overflow:    [family_up]              # needs a bigger window, not more thinking
-    provider_error:      [retry_same, family_up]
-    unknown:             [effort_up, family_up]   # default to the cheaper move
-
-governor:
-  target_open_spend_pct: 80.0
-  tolerance_pct: 5.0        # 75-85% band from BRIEF.md §10.3
-  window: "24h"
-  # The governor may only apply pressure inside the feasible region defined by
-  # the quality floors. Floor always wins over ratio.
-  enabled: true
-
-cold_start:
-  # New tenants run the global policy with a bounded, VISIBLE exploration
-  # budget rather than over-routing to frontier. (PLAN.md Q4)
-  exploration_requests: 500
-  exploration_budget_pct_of_tenant_spend: 5.0
-  novelty_fallback_threshold: 0.4   # OOD share that flips tenant to conservative
-
-compiler:
-  cadence: "nightly-labels, weekly-full"
-  max_spend_usd_per_run: 25.0       # ceiling per compile run; raise in config only
-  require_shadow_eval: true
-  auto_rollback_on_regression: true
+providers:
+  openai:
+    adapter: chat_api
+    base_url: https://api.openai.com/v1
+    api_key_env: OPENAI_API_KEY
+    timeout_s: 60
+    default_max_tokens: 1024
+  openrouter:
+    adapter: chat_api
+    base_url: https://openrouter.ai/api/v1
+    api_key_env: OPENROUTER_API_KEY
+    optional: true
+    timeout_s: 60
+    default_max_tokens: 1024
+    include_unverified: true
+ledger:
+  path: data/requests.sqlite3

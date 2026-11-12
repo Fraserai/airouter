@@ -5,12 +5,34 @@ from __future__ import annotations
 import json
 
 
-def test_health_reports_registry_and_milestone(client):
+def test_health_reports_registry_and_routing_mode(client):
     body = client.get("/health").json()
     assert body["status"] == "ok"
-    assert body["milestone"] == "M0"
-    assert body["registry"]["total"] == 23  # 22 seed + 1 dev stub
+    assert body["adapters"]["openrouter"]["optional"] is True
+    assert body["product"] == "Model Router"
+    assert body["runtime_routing"]["enabled"] is True
+    assert body["registry"]["total"] == 24  # 23 catalog entries + 1 dev stub
     assert body["intelligence_model"]  # configured, not hardcoded
+
+
+def test_branded_landing_page_uses_supplied_gradient_asset(client):
+    page = client.get("/")
+    assert page.status_code == 200
+    assert page.headers["content-type"].startswith("text/html")
+    assert "More intelligence." in page.text
+    assert "Less cost." in page.text
+    assert "Send a request once." in page.text
+    assert "One API for your model stack." in page.text
+    assert "/brand/model-router-gradient-logo.png" in page.text
+    assert "/brand/model-router-logo.png" in page.text
+    assert "/docs#/default/chat_completions_v1_chat_completions_post" in page.text
+
+
+def test_branded_logo_asset_is_served(client):
+    asset = client.get("/brand/model-router-logo.png")
+    assert asset.status_code == 200
+    assert asset.headers["content-type"] == "image/png"
+    assert asset.content.startswith(b"\x89PNG")
 
 
 def test_models_endpoint_explains_why_entries_are_blocked(client):
@@ -88,8 +110,8 @@ def test_explain_returns_a_plan_marked_provisional(client):
         },
     ).json()
     plan = body["routing"]
-    assert plan["milestone"] == "M0"
-    assert plan["deciding_tier"] is None
+    assert plan["selection_mode"] == "intelligent"
+    assert plan["frontier_authored"] is False
     assert plan["registry_version"].startswith("reg_")
     assert plan["provisional"] is True
 
@@ -100,6 +122,42 @@ def test_explain_is_absent_unless_requested(client):
         json={"model": "auto", "messages": [{"role": "user", "content": "hi"}]},
     ).json()
     assert body.get("routing") is None
+
+
+def test_dashboard_is_read_only_and_exposes_current_pool(client):
+    response = client.get("/dashboard")
+    assert response.status_code == 200
+    assert "Model Router" in response.text
+    assert "dev-stub@stub:default" in response.text
+    assert "router-data" in response.text
+    assert "OPENAI_API_KEY" not in response.text
+
+
+def test_routing_simulation_is_read_only_and_reports_provenance(client):
+    response = client.post(
+        "/v1/routing/simulate",
+        json={
+            "model": "auto",
+            "messages": [{"role": "user", "content": "hello"}],
+            "router": {"runtime": True},
+        },
+    )
+    assert response.status_code == 200
+    body = response.json()
+    assert body["simulated"] is True
+    assert body["executes"] is False
+    assert body["selection_mode"] == "candidate_preview"
+    assert body["routing"]["frontier_authored"] is False
+    assert body["routing"]["decision_source"] == "deterministic_fallback"
+    assert body["projected_execution_cost_usd"] == 0.0
+    assert client.get("/v1/routing/stats").json()["requests"] == 0
+
+
+def test_autonomous_job_routes_are_removed(client):
+    assert client.post("/v1/jobs", json={}).status_code == 404
+    assert client.get("/v1/jobs/old-job").status_code == 404
+    assert client.post("/v1/jobs/old-job/cancel").status_code == 404
+    assert not any("/jobs" in path for path in client.get("/openapi.json").json()["paths"])
 
 
 def test_streaming_emits_sse_chunks_and_terminates(client):

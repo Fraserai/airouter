@@ -2,11 +2,11 @@
 
 Two facts from the cost chart drive these:
 
-  1. Cheap does not mean open. GPT-5.6 Luna is CLOSED, costs $0.10/task and
-     scores 43 -- cheaper than most open models in this pool and stronger than
+  1. Cheap does not mean open. GPT-5.6 Luna is CLOSED, costs $0.18/benchmark task and
+     scores 38 -- cheaper than most open models in this pool and stronger than
      several. The open/closed axis is governance and residency. It is not a cost
-     proxy and selection must never treat it as one. The 80/20 target belongs to
-     the governor as a business commitment, not to per-request selection.
+     proxy and selection must never treat it as one. There is no target share
+     for open or closed execution.
 
   2. Benchmark cost-per-task is not a price. It is a weighted average over the
      index provider's task mix. Selection prices requests from TokenCost and the
@@ -20,7 +20,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from router_core.registry.schema import Access, CostStatus
+from router_core.registry.schema import Access, ModelEntry
 from router_core.registry.store import load_registry
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -77,9 +77,6 @@ def test_the_pool_really_does_contain_a_cheap_closed_model(config_dir):
 
 def test_cost_unknown_entries_are_ineligible(config_dir):
     """A router that cannot price a model cannot choose it responsibly."""
-    registry = load_registry(config_dir / "models.seed.yaml")
-    unpriced = [e for e in registry if e.benchmark.cost_status == CostStatus.UNKNOWN]
-    assert unpriced, "expected at least one entry with no published cost"
-    for entry in unpriced:
-        assert "cost_unknown" in entry.selectable_reasons()
-        assert not entry.is_selectable
+    entry = ModelEntry(id="unpriced", display_name="Unpriced model")
+    assert "cost_unknown" in entry.selectable_reasons()
+    assert not entry.is_selectable

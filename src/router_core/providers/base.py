@@ -16,7 +16,20 @@ from typing import Any, Protocol, runtime_checkable
 @dataclass(frozen=True)
 class ChatMessage:
     role: str
-    content: str
+    content: str | None
+    name: str | None = None
+    tool_calls: tuple[dict[str, Any], ...] = ()
+    tool_call_id: str | None = None
+    refusal: str | None = None
+
+    def to_wire(self) -> dict[str, Any]:
+        result: dict[str, Any] = {"role": self.role, "content": self.content}
+        for key in ("name", "tool_call_id", "refusal"):
+            if (value := getattr(self, key)) is not None:
+                result[key] = value
+        if self.tool_calls:
+            result["tool_calls"] = list(self.tool_calls)
+        return result
 
 
 @dataclass(frozen=True)
@@ -48,6 +61,8 @@ class Usage:
     output_tokens: int
     cached_input_tokens: int = 0
     estimated: bool = False
+    reasoning_output_tokens: int = 0
+    cache_write_input_tokens: int = 0
 
     @property
     def total_tokens(self) -> int:
@@ -64,6 +79,8 @@ class CompletionResult:
     ttft_ms: float | None = None
     provider_fingerprint: str | None = None
     raw: dict[str, Any] = field(default_factory=dict)
+    tool_calls: tuple[dict[str, Any], ...] = ()
+    refusal: str | None = None
 
 
 @dataclass(frozen=True)
@@ -71,6 +88,7 @@ class StreamChunk:
     delta: str
     finish_reason: str | None = None
     usage: Usage | None = None
+    message_delta: dict[str, Any] | None = None
 
 
 class ProviderError(RuntimeError):
@@ -104,6 +122,23 @@ class AdapterRegistry:
         self._adapters: list[ProviderAdapter] = []
 
     def register(self, adapter: ProviderAdapter) -> None:
+        incoming = set(getattr(adapter, "models", {}) or {})
+        incoming.update(getattr(adapter, "_model_ids", set()) or set())
+        if incoming:
+            covered: set[str] = set()
+            owners: dict[str, str] = {}
+            for existing in self._adapters:
+                ids = set(getattr(existing, "models", {}) or {})
+                ids.update(getattr(existing, "_model_ids", set()) or set())
+                covered.update(ids)
+                for model_id in ids:
+                    owners[model_id] = getattr(existing, "name", type(existing).__name__)
+            overlap = sorted(incoming & covered)
+            if overlap:
+                owner = owners[overlap[0]]
+                raise ProviderError(
+                    f"duplicate adapter coverage for {overlap[0]} ({owner} and {adapter.name})"
+                )
         self._adapters.append(adapter)
 
     def adapters(self) -> list[ProviderAdapter]:

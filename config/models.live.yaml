@@ -1,0 +1,95 @@
+# Verified deployment metadata, separate from the untouched benchmark seed.
+# Source: https://developers.openai.com/api/docs/models/gpt-4.1-mini
+# Standard text-token pricing retrieved 2026-09-07; no benchmark score inferred.
+schema_version: 1
+source:
+  name: OpenAI model documentation
+  version: "2026-09-07"
+models:
+  # https://developers.openai.com/api/docs/models/gpt-6-astra
+  # Account catalog confirmed gpt-6-astra; integration smoke tracked separately.
+  - id: gpt-6-astra@frontier:max
+    display_name: "GPT-6 Astra (routing intelligence, max effort)"
+    family: gpt-6-astra
+    effort: max
+    effort_rank: 3
+    lab: openai
+    access: closed
+    placement: closed_frontier
+    lifecycle: router
+    verified: true
+    verified_at: 2026-09-07T08:00:00Z
+    provider: openai
+    provider_model_id: gpt-6-astra
+    provider_options: {reasoning_effort: xhigh}
+    context_window: 1050000
+    modalities: [text, image]
+    api_features: [json_schema, json_object]
+    pricing:
+      input_usd_per_mtok: 10.0
+      cached_input_usd_per_mtok: 1.0
+      cache_write_input_usd_per_mtok: 12.5
+      output_usd_per_mtok: 50.0
+      max_priced_input_tokens: 272000
+    notes: >-
+      Configured routing brain and shared-pool executor. The chart labels this tier max; this account
+      accepts xhigh as its highest reasoning_effort, so the provider setting is
+      recorded explicitly and is not presented as exact max-effort parity.
+      Documentation-verified short-context rates; longer requests remain unpriced
+      here. No chart scores copied into deployment. Tools through this Chat
+      adapter are not verified. Account listing is not a quality evaluation.
+      Automatic requests consult this model; routing cost is recorded separately.
+
+  - id: gpt-4-1-mini@api:default
+    display_name: "GPT-4.1 mini (API connectivity baseline)"
+    family: gpt-4-1-mini
+    effort: default
+    effort_rank: 0
+    lab: openai
+    access: closed
+    placement: closed_frontier
+    lifecycle: executor
+    verified: true
+    verified_at: 2026-09-07T02:30:00Z
+    provider: openai
+    provider_model_id: gpt-4.1-mini-2025-04-14
+    context_window: 1047576
+    modalities: [text, image]
+    api_features: [tools, json_schema, json_object]
+    pricing:
+      input_usd_per_mtok: 0.40
+      cached_input_usd_per_mtok: 0.10
+      output_usd_per_mtok: 1.60
+    notes: >-
+      Fixed snapshot for live gateway verification. This gateway currently accepts
+      text only. No capability scores or benchmark costs are asserted.
+
+  # https://developers.openai.com/api/docs/models/gpt-5.6-luna
+  # Lower effort is a SEPARATE unit; no max-effort benchmark score is copied.
+  - id: gpt-5-6-luna@api:none
+    display_name: "GPT-5.6 Luna (no reasoning, evaluation candidate)"
+    family: gpt-5-6-luna
+    effort: none
+    effort_rank: 0
+    lab: openai
+    access: closed
+    placement: closed_frontier
+    lifecycle: executor
+    verified: true
+    verified_at: 2026-09-07T06:30:00Z
+    provider: openai
+    provider_model_id: gpt-5.6-luna
+    provider_options: {reasoning_effort: none}
+    context_window: 1050000
+    modalities: [text, image]
+    api_features: [tools, json_schema, json_object]
+    pricing:
+      input_usd_per_mtok: 0.20
+      cached_input_usd_per_mtok: 0.02
+      cache_write_input_usd_per_mtok: 0.25
+      output_usd_per_mtok: 1.20
+      max_priced_input_tokens: 272000
+    notes: >-
+      Documentation-verified metadata and standard short-context rates retrieved
+      2026-09-07. No benchmark capability score for this effort. Above 272K input
+      tokens the long-context tariff is unverified here, so cost is unknown.

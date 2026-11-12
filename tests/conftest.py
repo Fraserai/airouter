@@ -29,5 +29,6 @@ def client(config_dir, monkeypatch):
 
     monkeypatch.setenv("ROUTER_CONFIG_DIR", str(config_dir))
     monkeypatch.setenv("ROUTER_ENV", "dev")
+    monkeypatch.setenv("ROUTER_LEDGER_PATH", ":memory:")
     with TestClient(create_app()) as c:
         yield c

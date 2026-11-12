@@ -1,38 +1,27 @@
-"""The business case, reproduced from the seed data as a sanity baseline.
+"""Check the supplied benchmark comparisons; these are not live savings."""
 
-BRIEF §3: "Fable 5.1 costs roughly 61x what Luna costs for about 33% more index.
-The whole business case is in that ratio."
-
-This is a SANITY CHECK on the seed numbers, not a claim about the router. It is
-the ceiling of the opportunity, not the expected result -- see FINDINGS.md F009.
-"""
-
-from __future__ import annotations
+import pytest
 
 from router_core.registry.store import load_registry
 
 
-def test_frontier_to_cheap_closed_cost_ratio_is_roughly_61x(config_dir):
+@pytest.mark.parametrize(
+    "expensive_id,cheap_id,ratio,savings",
+    [
+        ("gpt-5-6-terra@frontier:max", "glm-5-3-flash@cloud:default", 5.6, 0.8214285714),
+        ("fable-5-1@frontier:max", "gpt-6-astra@frontier:max", 7.63 / 3.26, 0.5727391874),
+    ],
+)
+def test_supplied_equal_index_comparisons(config_dir, expensive_id, cheap_id, ratio, savings):
     registry = load_registry(config_dir / "models.seed.yaml")
-    top = registry.get("fable-5-1@frontier:max")
-    cheap = registry.get("gpt-5-6-luna@frontier:max")
-
-    cost_ratio = top.benchmark.cost_per_task_usd / cheap.benchmark.cost_per_task_usd
-    index_ratio = top.scores.composite / cheap.scores.composite
-
-    assert 55 <= cost_ratio <= 65, f"expected ~61x, got {cost_ratio:.1f}x"
-    assert 1.30 <= index_ratio <= 1.36, f"expected ~1.33x, got {index_ratio:.2f}x"
-
-
-def test_both_ends_of_that_ratio_are_closed_models(config_dir):
-    """The headline spread is not an open-vs-closed story. Both are closed."""
-    registry = load_registry(config_dir / "models.seed.yaml")
-    assert registry.get("fable-5-1@frontier:max").access.value == "closed"
-    assert registry.get("gpt-5-6-luna@frontier:max").access.value == "closed"
-
-
-def test_neither_end_of_the_ratio_is_routable_yet(config_dir):
-    """Unverified means unroutable, including the models in the business case."""
-    registry = load_registry(config_dir / "models.seed.yaml")
-    assert not registry.get("fable-5-1@frontier:max").is_selectable
-    assert not registry.get("gpt-5-6-luna@frontier:max").is_selectable
+    expensive, cheap = registry.get(expensive_id), registry.get(cheap_id)
+    assert expensive.scores.composite == cheap.scores.composite
+    assert (
+        expensive.benchmark.cost_per_task_usd / cheap.benchmark.cost_per_task_usd
+        == pytest.approx(ratio)
+    )
+    assert (
+        1 - cheap.benchmark.cost_per_task_usd / expensive.benchmark.cost_per_task_usd
+        == pytest.approx(savings)
+    )
+    assert not expensive.is_selectable and not cheap.is_selectable

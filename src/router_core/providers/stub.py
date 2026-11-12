@@ -18,6 +18,7 @@ from collections.abc import AsyncIterator
 from router_core.providers.base import (
     CompletionRequest,
     CompletionResult,
+    ProviderError,
     StreamChunk,
     Usage,
 )
@@ -44,14 +45,16 @@ class StubAdapter:
     def _render(self, request: CompletionRequest) -> str:
         joined = "\n".join(f"{m.role}: {m.content}" for m in request.messages)
         digest = hashlib.sha256(joined.encode()).hexdigest()[:12]
-        last = request.messages[-1].content if request.messages else ""
+        last = (request.messages[-1].content or "") if request.messages else ""
         return f"[stub:{request.model_id}#{digest}] {last[:400]}"
 
     async def complete(self, request: CompletionRequest) -> CompletionResult:
+        if request.extra.get("tools") or request.extra.get("response_format"):
+            raise ProviderError("stub does not support tools or structured output", status=422)
         started = time.perf_counter()
         await asyncio.sleep(self._delay_ms / 1000.0)
         content = self._render(request)
-        prompt = "\n".join(m.content for m in request.messages)
+        prompt = "\n".join(m.content or "" for m in request.messages)
         return CompletionResult(
             model_id=request.model_id,
             content=content,

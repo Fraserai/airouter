@@ -34,8 +34,8 @@ class AppConfig:
     router: dict[str, Any]
     quality_floors: dict[str, Any]
     placements: dict[str, Any]
-    tenants: dict[str, dict[str, Any]]
     registry: Registry
+    catalog: Registry
 
     @property
     def is_production(self) -> bool:
@@ -43,14 +43,11 @@ class AppConfig:
 
     @property
     def intelligence_model(self) -> str | None:
-        return (self.router.get("router") or {}).get("intelligence_model")
-
-    @property
-    def overhead_budget(self) -> dict[str, Any]:
-        return self.router.get("overhead_budget") or {}
-
-    def tenant(self, tenant_id: str) -> dict[str, Any]:
-        return self.tenants.get(tenant_id) or self.tenants["default"]
+        configured = (self.router.get("router") or {}).get("intelligence_model", "auto")
+        if configured != "auto":
+            return configured
+        ranked = self.catalog.ranked()
+        return ranked[0].id if ranked else None
 
 
 def _attach_costs(registry: Registry, placements: dict[str, Any]) -> Registry:
@@ -75,22 +72,45 @@ def _attach_costs(registry: Registry, placements: dict[str, Any]) -> Registry:
     return out
 
 
-def _load_tenants(config_dir: Path) -> dict[str, dict[str, Any]]:
-    tenant_dir = config_dir / "tenants"
-    tenants: dict[str, dict[str, Any]] = {}
-    for path in sorted(tenant_dir.glob("*.yaml")):
-        doc = _read_yaml(path)
-        tenants[doc.get("tenant_id", path.stem)] = doc
-    if "default" not in tenants:
-        raise RuntimeError("config/tenants/default.yaml is required")
-    return tenants
+def _attach_catalog_endpoints(registry: Registry, config_dir: Path) -> Registry:
+    """Attach mapped hosted endpoints without certifying a deployment.
+
+    The chart map is a connection hint only. Entries retain their unverified
+    state and therefore remain ineligible until the provider evidence gate is
+    completed. Local and unknown placements are left untouched because a hosted
+    endpoint would change the product's placement semantics.
+    """
+    mapping_path = config_dir / "chart-provider-map.yaml"
+    if not mapping_path.exists():
+        return registry
+    mapping = _read_yaml(mapping_path).get("models") or {}
+    out = registry
+    for entry in registry.all():
+        endpoint = mapping.get(entry.id)
+        if (
+            endpoint
+            and entry.provider is None
+            and entry.placement.value not in {"local", "unknown"}
+        ):
+            out = out.with_entry(
+                entry.model_copy(update={"provider": "openrouter", "provider_model_id": endpoint})
+            )
+    return out
 
 
 def load_config(config_dir: str | Path | None = None, env: str | None = None) -> AppConfig:
     config_dir = Path(config_dir or os.environ.get("ROUTER_CONFIG_DIR", DEFAULT_CONFIG_DIR))
     env = env or os.environ.get("ROUTER_ENV", "dev")
+    if env not in {"dev", "live", "production"}:
+        raise ValueError("ROUTER_ENV must be dev, live, or production")
 
-    registry = load_registry(config_dir / "models.seed.yaml")
+    catalog = load_registry(config_dir / "models.seed.yaml")
+    registry = catalog
+
+    live_overlay = config_dir / "models.live.yaml"
+    if env in {"live", "production"} and live_overlay.exists():
+        for entry in load_registry(live_overlay).all():
+            registry = registry.with_entry(entry)
 
     # Dev overlay carries the deterministic stub. Never loaded in production.
     dev_overlay = config_dir / "models.dev.yaml"
@@ -98,6 +118,8 @@ def load_config(config_dir: str | Path | None = None, env: str | None = None) ->
         overlay = load_registry(dev_overlay)
         for entry in overlay.all():
             registry = registry.with_entry(entry)
+
+    registry = _attach_catalog_endpoints(registry, config_dir)
 
     placements = _read_yaml(config_dir / "placements.yaml")
     registry = _attach_costs(registry, placements)
@@ -108,8 +130,8 @@ def load_config(config_dir: str | Path | None = None, env: str | None = None) ->
         router=_read_yaml(config_dir / "router.yaml"),
         quality_floors=_read_yaml(config_dir / "quality_floors.yaml"),
         placements=placements,
-        tenants=_load_tenants(config_dir),
         registry=registry,
+        catalog=catalog,
     )
 
 

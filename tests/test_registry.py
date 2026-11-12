@@ -6,9 +6,9 @@ from router_core.registry.schema import Lifecycle, ModelEntry, Placement
 from router_core.registry.store import RegistryError, load_registry
 
 
-def test_seed_registry_loads_all_22_models(config_dir):
+def test_seed_registry_loads_all_23_models(config_dir):
     registry = load_registry(config_dir / "models.seed.yaml")
-    assert len(registry) == 22
+    assert len(registry) == 23
 
 
 def test_no_seed_model_is_selectable(config_dir):
@@ -27,7 +27,7 @@ def test_every_seed_model_is_unverified_and_unpriced(config_dir):
 def test_subscore_schema_exists_even_though_seed_supplies_only_composite(config_dir):
     registry = load_registry(config_dir / "models.seed.yaml")
     entry = registry.get("fable-5-1@frontier:max")
-    assert entry.scores.composite == 57
+    assert entry.scores.composite == 53
     assert entry.scores.has_subscores is False
     assert entry.scores.terminal_bench_v2_1 is None  # present in schema, unset
 

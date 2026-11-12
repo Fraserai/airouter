@@ -38,7 +38,10 @@ class Registry:
 
     def _compute_version(self) -> str:
         payload = json.dumps(
-            [self._entries[k].model_dump(mode="json") for k in sorted(self._entries)],
+            [
+                self._entries[k].model_dump(mode="json", exclude={"cost": {"computed_at"}})
+                for k in sorted(self._entries)
+            ],
             sort_keys=True,
             separators=(",", ":"),
         )
@@ -65,6 +68,23 @@ class Registry:
     def selectable(self) -> list[ModelEntry]:
         """The candidate pool. Empty until models are verified -- by design."""
         return [e for e in self._entries.values() if e.is_selectable]
+
+    def ranked(self) -> list[ModelEntry]:
+        """Catalog ranking: intelligence first, benchmark cost breaks ties.
+
+        This ranks the supplied market snapshot; it does not price a request
+        or certify a deployment. Unknown scores sort after measured scores.
+        """
+        return sorted(
+            self.all(),
+            key=lambda entry: (
+                -(entry.scores.composite if entry.scores.composite is not None else -1),
+                entry.benchmark.cost_per_task_usd
+                if entry.benchmark.cost_per_task_usd is not None
+                else float("inf"),
+                entry.id,
+            ),
+        )
 
     def by_placement(self, placement: Placement) -> list[ModelEntry]:
         return [e for e in self._entries.values() if e.placement == placement]

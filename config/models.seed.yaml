@@ -1,335 +1,381 @@
-# Seed model registry.
-#
-# SOURCE: Artificial Analysis Intelligence Index v4.2 snapshot, 6 Sep 2026,
-#         plus the companion "Cost per Intelligence Index Task" chart.
-#         https://artificialanalysis.ai/#intelligence
-#
-# THIS IS SEED DATA, NOT TRUTH (BRIEF §3 rule 1).
-#   - `access` and `placement` are transcribed/inferred and UNVERIFIED.
-#   - `pricing` is null everywhere. We do not guess per-token prices.
-#   - `benchmark.cost_per_task_usd` is NOT a price. It is a weighted average over
-#     the index provider's task mix and only predicts your cost if your traffic
-#     looks like their benchmark. Seeds priors and sanity-checks the harness;
-#     never read by the selection path.
-#   - `verified: false` means INELIGIBLE FOR SELECTION.
-#
-# THE ROUTABLE UNIT IS (model, effort), NOT model.
-#   ids are `<family>@<placement>:<effort>`. `family` groups effort variants so
-#   the escalator can turn the dial before switching families.
-#   `effort` is the provider's own label. `effort_rank` supplies the ordering,
-#   because the labels are vendor vocabulary with no universal order -- routing
-#   logic compares ranks, never strings. See FINDINGS.md F007.
-#   Ranks are only meaningful WITHIN a family.
-#
-# Placement is a property of a deployment, not a model (FINDINGS.md F005).
-
+# Market catalog: 23 models from the supplied vision.
+# Benchmark task costs are display data, never API billing rates.
+# Provider deployments are configured separately in models.live.yaml.
 schema_version: 2
 source:
-  name: "Artificial Analysis Intelligence Index"
-  version: "v4.2"
-  snapshot_date: 2026-09-06
-  url: "https://artificialanalysis.ai/#intelligence"
-  evals:
-    - aa_briefcase
-    - gdpval_aa_v2
-    - tau3_banking
-    - terminal_bench_v2_1
-    - scicode
-    - hle
-    - gdp_pdf
-    - critpt
-    - aa_omniscience
-    - aa_lcr_v1_1
-
+  name: User-supplied Artificial Analysis snapshot
+  version: '2026-09-08'
+  snapshot_date: '2026-09-08'
+  provenance: Model Router vision supplied 2026-09-09; not independently refreshed
+  configuration_status: Effort and fallback details not supplied in this snapshot
+  access_status: Inherited classifications are provisional; new or ambiguous models
+    remain unknown
 models:
-  - id: fable-5-1@frontier:max
-    display_name: "Claude Fable 5.1 (max, with fallback)"
-    family: fable-5-1
-    effort: max
-    effort_rank: 3
-    lab: anthropic
-    access: closed
-    placement: closed_frontier
-    scores: {composite: 57}
-    benchmark:
-      cost_per_task_usd: 6.12
-      cost_status: known
-    notes: "Published score reflects a system with a fallback path (BRIEF §3 rule 6)."
-
-  - id: gpt-6-astra@frontier:max
-    display_name: "GPT-6 Astra (max)"
-    family: gpt-6-astra
-    effort: max
-    effort_rank: 3
-    lab: openai
-    access: closed
-    placement: closed_frontier
-    scores: {composite: 55}
-    benchmark:
-      cost_per_task_usd: 2.57
-      cost_status: known
-
-  - id: opus-5@frontier:max
-    display_name: "Claude Opus 5 (max)"
-    family: opus-5
-    effort: max
-    effort_rank: 3
-    lab: anthropic
-    access: closed
-    placement: closed_frontier
-    scores: {composite: 54}
-    benchmark:
-      cost_per_task_usd: 4.21
-      cost_status: known
-
-  - id: fable-5@frontier:default
-    display_name: "Claude Fable 5 (with fallback)"
-    family: fable-5
-    effort: default
-    effort_rank: 0
-    lab: anthropic
-    access: closed
-    placement: closed_frontier
-    scores: {composite: 53}
-    benchmark:
-      cost_per_task_usd: 5.62
-      cost_status: known
-    notes: "Published score reflects a system with a fallback path (BRIEF §3 rule 6)."
-
-  - id: muse-spark-1-3@cloud:max
-    display_name: "Muse Spark 1.3 (max)"
-    family: muse-spark-1-3
-    effort: max
-    effort_rank: 3
-    lab: meta
-    access: open
-    placement: cloud_open
-    scores: {composite: 53}
-    benchmark:
-      cost_per_task_usd: 0.96
-      cost_status: known
-
-  - id: gpt-5-6-sol@frontier:max
-    display_name: "GPT-5.6 Sol (max)"
-    family: gpt-5-6-sol
-    effort: max
-    effort_rank: 3
-    lab: openai
-    access: closed
-    placement: closed_frontier
-    scores: {composite: 51}
-    benchmark:
-      cost_per_task_usd: 1.25
-      cost_status: known
-
-  - id: grok-4-6@frontier:high
-    display_name: "Grok 4.6 (high)"
-    family: grok-4-6
-    effort: high
-    effort_rank: 2
-    lab: xai
-    access: closed
-    placement: closed_frontier
-    scores: {composite: 51}
-    benchmark:
-      cost_per_task_usd: 1.25
-      cost_status: known
-
-  - id: kimi-k3@cloud:max
-    display_name: "Kimi K3 (max)"
-    family: kimi-k3
-    effort: max
-    effort_rank: 3
-    lab: moonshot
-    access: open
-    placement: cloud_open
-    scores: {composite: 50}
-    benchmark:
-      cost_per_task_usd: 1.58
-      cost_status: known
-
-  - id: glm-5-3@cloud:max
-    display_name: "GLM-5.3 (max)"
-    family: glm-5-3
-    effort: max
-    effort_rank: 3
-    lab: zai
-    access: open
-    placement: cloud_open
-    scores: {composite: 49}
-    benchmark:
-      cost_per_task_usd: 1.26
-      cost_status: known
-
-  - id: gemini-3-8-flash@frontier:high
-    display_name: "Gemini 3.8 Flash (high)"
-    family: gemini-3-8-flash
-    effort: high
-    effort_rank: 2
-    lab: google
-    access: closed
-    placement: closed_frontier
-    scores: {composite: 47}
-    benchmark:
-      cost_per_task_usd: 0.74
-      cost_status: known
-
-  - id: gpt-5-6-terra@frontier:max
-    display_name: "GPT-5.6 Terra (max)"
-    family: gpt-5-6-terra
-    effort: max
-    effort_rank: 3
-    lab: openai
-    access: closed
-    placement: closed_frontier
-    scores: {composite: 47}
-    benchmark:
-      cost_per_task_usd: 0.81
-      cost_status: known
-
-  - id: qwen-3-8-2-4t-a95b@cloud:default
-    display_name: "Qwen3.8 2.4T A95B"
-    family: qwen-3-8-2-4t-a95b
-    effort: default
-    effort_rank: 0
-    lab: alibaba
-    access: open
-    placement: cloud_open
-    scores: {composite: 47}
-    benchmark:
-      cost_per_task_usd: 1.1
-      cost_status: known
-
-  - id: glm-5-3-flash@cloud:default
-    display_name: "GLM-5.3-Flash"
-    family: glm-5-3-flash
-    effort: default
-    effort_rank: 0
-    lab: zai
-    access: open
-    placement: cloud_open
-    scores: {composite: 46}
-    benchmark:
-      cost_per_task_usd: 0.18
-      cost_status: known
-
-  - id: gpt-5-6-luna@frontier:max
-    display_name: "GPT-5.6 Luna (max)"
-    family: gpt-5-6-luna
-    effort: max
-    effort_rank: 3
-    lab: openai
-    access: closed
-    placement: closed_frontier
-    scores: {composite: 43}
-    benchmark:
-      cost_per_task_usd: 0.1
-      cost_status: known
-    notes: "CLOSED and cheap. Proof that open/closed is not a cost proxy (BRIEF §3)."
-
-  - id: deepseek-v4-pro-0813@cloud:max
-    display_name: "DeepSeek V4 Pro 0813 (max)"
-    family: deepseek-v4-pro-0813
-    effort: max
-    effort_rank: 3
-    lab: deepseek
-    access: open
-    placement: cloud_open
-    scores: {composite: 42}
-    benchmark:
-      cost_per_task_usd: 0.33
-      cost_status: known
-
-  - id: qwen-3-8-27b@local:xhigh
-    display_name: "Qwen3.8 27B (xhigh)"
-    family: qwen-3-8-27b
-    effort: xhigh
-    effort_rank: 3
-    lab: alibaba
-    access: open
-    placement: local
-    scores: {composite: 41}
-    benchmark:
-      cost_per_task_usd: 0.57
-      cost_status: known
-
-  - id: k2-horizon-375b-a23b@cloud:default
-    display_name: "K2 Horizon 375B A23B"
-    family: k2-horizon-375b-a23b
-    effort: default
-    effort_rank: 0
-    lab: unknown
-    access: open
-    placement: cloud_open
-    scores: {composite: 38}
-    benchmark:
-      cost_per_task_usd: null
-      cost_status: unknown
-    notes: "No cost data published. cost_unknown -> ineligible for routing until priced."
-
-  - id: minimax-m3@cloud:default
-    display_name: "MiniMax-M3"
-    family: minimax-m3
-    effort: default
-    effort_rank: 0
-    lab: minimax
-    access: open
-    placement: cloud_open
-    scores: {composite: 36}
-    benchmark:
-      cost_per_task_usd: 0.23
-      cost_status: known
-
-  - id: inkling@unknown:default
-    display_name: "Inkling"
-    family: inkling
-    effort: default
-    effort_rank: 0
-    lab: thinking_machines
-    access: unknown
-    placement: unknown
-    scores: {composite: 32}
-    benchmark:
-      cost_per_task_usd: 0.44
-      cost_status: known
-    notes: "Access unknown in source. Cannot be placed until verified."
-
-  - id: gemini-3-5-flash-lite@frontier:default
-    display_name: "Gemini 3.5 Flash-Lite"
-    family: gemini-3-5-flash-lite
-    effort: default
-    effort_rank: 0
-    lab: google
-    access: closed
-    placement: closed_frontier
-    scores: {composite: 28}
-    benchmark:
-      cost_per_task_usd: 0.08
-      cost_status: known
-    notes: "CLOSED and the cheapest entry in the pool."
-
-  - id: muse-glimmer@cloud:high
-    display_name: "Muse Glimmer (high)"
-    family: muse-glimmer
-    effort: high
-    effort_rank: 2
-    lab: meta
-    access: open
-    placement: cloud_open
-    scores: {composite: 24}
-    benchmark:
-      cost_per_task_usd: 0.04
-      cost_status: known
-
-  - id: gpt-oss-120b@cloud:high
-    display_name: "gpt-oss-120b (high)"
-    family: gpt-oss-120b
-    effort: high
-    effort_rank: 2
-    lab: openai
-    access: open
-    placement: cloud_open
-    scores: {composite: 16}
-    benchmark:
-      cost_per_task_usd: 0.12
-      cost_status: known
+- id: gpt-6-astra@frontier:max
+  display_name: GPT-6 Astra
+  family: gpt-6-astra
+  effort: max
+  effort_rank: 3
+  lab: openai
+  access: closed
+  placement: closed_frontier
+  scores:
+    composite: 53
+  benchmark:
+    cost_per_task_usd: 3.26
+    cost_status: known
+  verified: false
+  notes: User-supplied September 8 snapshot. Effort, fallback, access and deployment
+    metadata are provisional; verify before enabling.
+- id: fable-5-1@frontier:max
+  display_name: Claude Fable 5.1
+  family: fable-5-1
+  effort: max
+  effort_rank: 3
+  lab: anthropic
+  access: closed
+  placement: closed_frontier
+  scores:
+    composite: 53
+  benchmark:
+    cost_per_task_usd: 7.63
+    cost_status: known
+  notes: User-supplied September 8 snapshot. Effort, fallback, access and deployment
+    metadata are provisional; verify before enabling.
+  verified: false
+- id: opus-5@frontier:max
+  display_name: Claude Opus 5
+  family: opus-5
+  effort: max
+  effort_rank: 3
+  lab: anthropic
+  access: closed
+  placement: closed_frontier
+  scores:
+    composite: 51
+  benchmark:
+    cost_per_task_usd: 5.86
+    cost_status: known
+  verified: false
+  notes: User-supplied September 8 snapshot. Effort, fallback, access and deployment
+    metadata are provisional; verify before enabling.
+- id: fable-5@frontier:default
+  display_name: Claude Fable 5
+  family: fable-5
+  effort: default
+  effort_rank: 0
+  lab: anthropic
+  access: closed
+  placement: closed_frontier
+  scores:
+    composite: 50
+  benchmark:
+    cost_per_task_usd: 8.75
+    cost_status: known
+  notes: User-supplied September 8 snapshot. Effort, fallback, access and deployment
+    metadata are provisional; verify before enabling.
+  verified: false
+- id: muse-spark-1-3@cloud:max
+  display_name: Muse Spark 1.3
+  family: muse-spark-1-3
+  effort: max
+  effort_rank: 3
+  lab: meta
+  access: open
+  placement: cloud_open
+  scores:
+    composite: 48
+  benchmark:
+    cost_per_task_usd: 1.6
+    cost_status: known
+  verified: false
+  notes: User-supplied September 8 snapshot. Effort, fallback, access and deployment
+    metadata are provisional; verify before enabling.
+- id: gpt-5-6-sol@frontier:max
+  display_name: GPT-5.6 Sol
+  family: gpt-5-6-sol
+  effort: max
+  effort_rank: 3
+  lab: openai
+  access: closed
+  placement: closed_frontier
+  scores:
+    composite: 47
+  benchmark:
+    cost_per_task_usd: 1.99
+    cost_status: known
+  verified: false
+  notes: User-supplied September 8 snapshot. Effort, fallback, access and deployment
+    metadata are provisional; verify before enabling.
+- id: glm-5-3@cloud:max
+  display_name: GLM-5.3
+  family: glm-5-3
+  effort: max
+  effort_rank: 3
+  lab: zai
+  access: open
+  placement: cloud_open
+  scores:
+    composite: 45
+  benchmark:
+    cost_per_task_usd: 2.01
+    cost_status: known
+  verified: false
+  notes: User-supplied September 8 snapshot. Effort, fallback, access and deployment
+    metadata are provisional; verify before enabling.
+- id: grok-4-6@frontier:high
+  display_name: Grok 4.6
+  family: grok-4-6
+  effort: high
+  effort_rank: 2
+  lab: xai
+  access: closed
+  placement: closed_frontier
+  scores:
+    composite: 44
+  benchmark:
+    cost_per_task_usd: 1.86
+    cost_status: known
+  verified: false
+  notes: User-supplied September 8 snapshot. Effort, fallback, access and deployment
+    metadata are provisional; verify before enabling.
+- id: kimi-k3@cloud:max
+  display_name: Kimi K3
+  family: kimi-k3
+  effort: max
+  effort_rank: 3
+  lab: moonshot
+  access: open
+  placement: cloud_open
+  scores:
+    composite: 44
+  benchmark:
+    cost_per_task_usd: 2.0
+    cost_status: known
+  verified: false
+  notes: User-supplied September 8 snapshot. Effort, fallback, access and deployment
+    metadata are provisional; verify before enabling.
+- id: gpt-5-6-terra@frontier:max
+  display_name: GPT-5.6 Terra
+  family: gpt-5-6-terra
+  effort: max
+  effort_rank: 3
+  lab: openai
+  access: closed
+  placement: closed_frontier
+  scores:
+    composite: 42
+  benchmark:
+    cost_per_task_usd: 1.4
+    cost_status: known
+  verified: false
+  notes: User-supplied September 8 snapshot. Effort, fallback, access and deployment
+    metadata are provisional; verify before enabling.
+- id: glm-5-3-flash@cloud:default
+  display_name: GLM-5.3-Flash
+  family: glm-5-3-flash
+  effort: default
+  effort_rank: 0
+  lab: zai
+  access: open
+  placement: cloud_open
+  scores:
+    composite: 42
+  benchmark:
+    cost_per_task_usd: 0.25
+    cost_status: known
+  verified: false
+  notes: User-supplied September 8 snapshot. Effort, fallback, access and deployment
+    metadata are provisional; verify before enabling.
+- id: gemini-3-8-flash@frontier:high
+  display_name: Gemini 3.8 Flash
+  family: gemini-3-8-flash
+  effort: high
+  effort_rank: 2
+  lab: google
+  access: closed
+  placement: closed_frontier
+  scores:
+    composite: 41
+  benchmark:
+    cost_per_task_usd: 1.24
+    cost_status: known
+  verified: false
+  notes: User-supplied September 8 snapshot. Effort, fallback, access and deployment
+    metadata are provisional; verify before enabling.
+- id: qwen-3-8-247b-a95b@unknown:default
+  family: qwen-3-8-247b-a95b
+  effort: default
+  effort_rank: 0
+  lab: unknown
+  access: unknown
+  placement: unknown
+  display_name: Qwen3.8 247B A95B
+  scores:
+    composite: 40
+  benchmark:
+    cost_per_task_usd: 2.16
+    cost_status: known
+  verified: false
+  notes: User-supplied September 8 snapshot. Effort, fallback, access and deployment
+    metadata are provisional; verify before enabling.
+- id: gpt-5-6-luna@frontier:max
+  display_name: GPT-5.6 Luna
+  family: gpt-5-6-luna
+  effort: max
+  effort_rank: 3
+  lab: openai
+  access: closed
+  placement: closed_frontier
+  scores:
+    composite: 38
+  benchmark:
+    cost_per_task_usd: 0.18
+    cost_status: known
+  notes: User-supplied September 8 snapshot. Effort, fallback, access and deployment
+    metadata are provisional; verify before enabling.
+  verified: false
+- id: deepseek-v4-pro-0813@cloud:max
+  display_name: DeepSeek V4 Pro 0813
+  family: deepseek-v4-pro-0813
+  effort: max
+  effort_rank: 3
+  lab: deepseek
+  access: open
+  placement: cloud_open
+  scores:
+    composite: 36
+  benchmark:
+    cost_per_task_usd: 0.67
+    cost_status: known
+  verified: false
+  notes: User-supplied September 8 snapshot. Effort, fallback, access and deployment
+    metadata are provisional; verify before enabling.
+- id: qwen-3-8-27b@local:xhigh
+  display_name: Qwen3.8 27B
+  family: qwen-3-8-27b
+  effort: xhigh
+  effort_rank: 3
+  lab: alibaba
+  access: open
+  placement: local
+  scores:
+    composite: 34
+  benchmark:
+    cost_per_task_usd: 0.82
+    cost_status: known
+  verified: false
+  notes: User-supplied September 8 snapshot. Effort, fallback, access and deployment
+    metadata are provisional; verify before enabling.
+- id: minimax-m3@cloud:default
+  display_name: MiniMax-M3
+  family: minimax-m3
+  effort: default
+  effort_rank: 0
+  lab: minimax
+  access: open
+  placement: cloud_open
+  scores:
+    composite: 30
+  benchmark:
+    cost_per_task_usd: 0.51
+    cost_status: known
+  verified: false
+  notes: User-supplied September 8 snapshot. Effort, fallback, access and deployment
+    metadata are provisional; verify before enabling.
+- id: inkling@unknown:default
+  display_name: Inkling
+  family: inkling
+  effort: default
+  effort_rank: 0
+  lab: thinking_machines
+  access: unknown
+  placement: unknown
+  scores:
+    composite: 26
+  benchmark:
+    cost_per_task_usd: 0.61
+    cost_status: known
+  notes: User-supplied September 8 snapshot. Effort, fallback, access and deployment
+    metadata are provisional; verify before enabling.
+  verified: false
+- id: nemotron-3-ultra@unknown:default
+  family: nemotron-3-ultra
+  effort: default
+  effort_rank: 0
+  lab: unknown
+  access: unknown
+  placement: unknown
+  display_name: Nemotron 3 Ultra
+  scores:
+    composite: 23
+  benchmark:
+    cost_per_task_usd: 0.58
+    cost_status: known
+  verified: false
+  notes: User-supplied September 8 snapshot. Effort, fallback, access and deployment
+    metadata are provisional; verify before enabling.
+- id: gemini-3-5-flash-lite@frontier:default
+  display_name: Gemini 3.5 Flash-Lite
+  family: gemini-3-5-flash-lite
+  effort: default
+  effort_rank: 0
+  lab: google
+  access: closed
+  placement: closed_frontier
+  scores:
+    composite: 23
+  benchmark:
+    cost_per_task_usd: 0.12
+    cost_status: known
+  notes: User-supplied September 8 snapshot. Effort, fallback, access and deployment
+    metadata are provisional; verify before enabling.
+  verified: false
+- id: muse-glimmer@cloud:high
+  display_name: Muse Glimmer
+  family: muse-glimmer
+  effort: high
+  effort_rank: 2
+  lab: meta
+  access: open
+  placement: cloud_open
+  scores:
+    composite: 18
+  benchmark:
+    cost_per_task_usd: 0.06
+    cost_status: known
+  verified: false
+  notes: User-supplied September 8 snapshot. Effort, fallback, access and deployment
+    metadata are provisional; verify before enabling.
+- id: mistral-medium-3-5@unknown:default
+  family: mistral-medium-3-5
+  effort: default
+  effort_rank: 0
+  lab: unknown
+  access: unknown
+  placement: unknown
+  display_name: Mistral Medium 3.5
+  scores:
+    composite: 15
+  benchmark:
+    cost_per_task_usd: 0.44
+    cost_status: known
+  verified: false
+  notes: User-supplied September 8 snapshot. Effort, fallback, access and deployment
+    metadata are provisional; verify before enabling.
+- id: gpt-oss-120b@cloud:high
+  display_name: gpt-oss-120b
+  family: gpt-oss-120b
+  effort: high
+  effort_rank: 2
+  lab: openai
+  access: open
+  placement: cloud_open
+  scores:
+    composite: 12
+  benchmark:
+    cost_per_task_usd: 0.11
+    cost_status: known
+  verified: false
+  notes: User-supplied September 8 snapshot. Effort, fallback, access and deployment
+    metadata are provisional; verify before enabling.

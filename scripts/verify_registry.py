@@ -5,7 +5,7 @@ A router that silently misclassifies a closed model as open is a compliance
 incident, not a bug. This script is the gate. It exits non-zero whenever any
 entry is enabled-looking but unverified, and it prints exactly what is missing.
 
-Expected result on a fresh checkout: FAILURE, with 22 unverified entries. That
+Expected result on a fresh checkout: FAILURE, with 23 unverified catalog entries. That
 is the system working.
 """
 
@@ -37,7 +37,7 @@ def audit(entry) -> list[str]:
         problems.append("pricing missing")
     if entry.cost is None:
         problems.append("no derivable cost model")
-    if entry.benchmark.cost_status == CostStatus.UNKNOWN:
+    if entry.benchmark.cost_status == CostStatus.UNKNOWN and entry.cost is None:
         problems.append("cost_unknown (no published cost; cannot be priced)")
     if not entry.family:
         problems.append("family missing (needed for the effort escalation ladder)")

@@ -1,7 +1,7 @@
 [project]
-name = "ai-router"
-version = "0.1.0"
-description = "Intelligent AI API router — highest quality output for the cheapest cost."
+name = "model-router"
+version = "0.2.0"
+description = "One API. A frontier routing brain. An open and closed model pool."
 requires-python = ">=3.12"
 dependencies = [
     "fastapi>=0.115",
@@ -10,6 +10,7 @@ dependencies = [
     "pydantic-settings>=2.6",
     "pyyaml>=6.0",
     "httpx>=0.28",
+    "python-dotenv>=1.0",
 ]
 
 [project.optional-dependencies]
@@ -17,6 +18,7 @@ dev = [
     "pytest>=8.3",
     "pytest-asyncio>=0.24",
     "ruff>=0.8",
+    "openai>=1.0",
 ]
 
 [build-system]

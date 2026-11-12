@@ -9,6 +9,7 @@ from __future__ import annotations
 
 from datetime import date, datetime
 from enum import StrEnum
+from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -36,7 +37,7 @@ class Placement(StrEnum):
 
     @property
     def is_open(self) -> bool:
-        """Open placements are the ones the 80% of spend should land on."""
+        """Whether this placement runs an open model; never a routing quota."""
         return self in (Placement.LOCAL, Placement.CLOUD_OPEN)
 
 
@@ -105,11 +106,14 @@ class Pricing(BaseModel):
     amortised model in costing/local_amortised.py.
     """
 
-    model_config = ConfigDict(extra="forbid")
+    model_config = ConfigDict(extra="forbid", allow_inf_nan=False)
 
-    input_usd_per_mtok: float
-    output_usd_per_mtok: float
-    cached_input_usd_per_mtok: float | None = None
+    input_usd_per_mtok: float = Field(ge=0)
+    output_usd_per_mtok: float = Field(ge=0)
+    cached_input_usd_per_mtok: float | None = Field(default=None, ge=0)
+    cache_write_input_usd_per_mtok: float | None = Field(default=None, ge=0)
+    # Beyond this bound a separate long-context tariff needs verification.
+    max_priced_input_tokens: int | None = Field(default=None, gt=0)
     currency: str = "USD"
 
 
@@ -229,6 +233,8 @@ class ModelEntry(BaseModel):
 
     provider: str | None = None
     provider_model_id: str | None = None
+    provider_options: dict[str, Any] = Field(default_factory=dict)
+    api_features: list[Literal["tools", "json_schema", "json_object"]] = Field(default_factory=list)
 
     fingerprint: Fingerprint = Field(default_factory=Fingerprint)
     health: Health = Field(default_factory=Health)
@@ -255,8 +261,9 @@ class ModelEntry(BaseModel):
             reasons.append("no_cost_model")
         if self.health.state == HealthState.DOWN:
             reasons.append("health_down")
-        if self.benchmark.cost_status == CostStatus.UNKNOWN:
-            # A router that cannot price a model cannot choose it responsibly.
+        if self.benchmark.cost_status == CostStatus.UNKNOWN and self.cost is None:
+            # Benchmark averages are not billing prices. Verified token rates
+            # suffice even when no benchmark cost has been published.
             reasons.append("cost_unknown")
         return reasons
 
